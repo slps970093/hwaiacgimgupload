@@ -72,7 +72,7 @@
 						<li>請注意檔案命名，請勿使用"."來取檔案名稱，以免發生錯誤(EX:web.ini.jpg)</li>
 					</ol>
 					如需修改程式碼，請點選一下按鈕觀看專案原始碼
-					<p><a class="btn btn-primary btn-lg" href="#" role="button">查看專案原始碼</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="logout.php" role="button">登出</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="<?php echo $config['blog']; ?>" role="button">連結部落格</a></p>
+					<p><a class="btn btn-primary btn-lg" href="https://github.com/slps970093/hwaiacgimgupload" role="button">查看專案原始碼</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="logout.php" role="button">登出</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="<?php echo $config['blog']; ?>" role="button">連結部落格</a></p>
 				</div>
 				<form method="post" action="imgupload.php" enctype="multipart/form-data">
 					上傳圖片檔案<br>
