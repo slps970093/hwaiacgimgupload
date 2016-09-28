@@ -7,8 +7,8 @@
 	$config['username'] = "";
 	$config['password'] = "";
 	//部落格網址
-	$config['blog'] = "http://blog.yam.com/hwaihcf";
-
+	$config['blog'] = "";
+	//設定預設壓縮長寬
 	$config['default_weight'] = ;
 	$config['default_height'] = ;
 ?>
