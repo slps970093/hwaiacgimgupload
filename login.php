@@ -1,12 +1,10 @@
 <?php session_start(); ?>
 <?php
-	if(!is_file("config.php")){
-		echo "<script type='text/javascript'>alert('發生嚴重錯誤，請檢查設定檔案是否在網站根目錄下');</script>";
+	if(is_file("init.php")){
+		include("init.php");
 	}else{
-		include "config.php"; //設定檔案
-		if(is_null($config['username']) && is_null($config['password'])){
-			echo "<script type='text/javascript'>alert('警告!帳號密碼尚未設定，請檢查設定檔案是否設定正確');</script>";
-		}
+		echo "<script type='text/javascript'>alert('找不到初始化設定檔案');</script>";
+		header("location:stop.php");
 	}
 	if(isset($_SESSION['username'])){
 		header("location:imgupload.php");

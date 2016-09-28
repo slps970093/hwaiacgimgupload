@@ -7,21 +7,16 @@
 	 * 新增 圖片自動調整大小功能(PHP需支援GD函式庫)
 	 *
 	 */
-	if(!is_file("config.php")){
-		echo "<script type='text/javascript'>alert('發生嚴重錯誤，請檢查設定檔案是否在網站根目錄下');</script>";
-	}else{
-		include "config.php"; //設定檔案
-		if(is_null($config['username']) && is_null($config['password'])){
-			echo "<script type='text/javascript'>alert('警告!帳號密碼尚未設定，請檢查設定檔案是否設定正確');</script>";
-		}
-		if(is_null($config['default_weight']) && is_null($config['default_height'])){
-			echo "<script type='text/javascript'>alert('注意:偵測到圖片預設長寬無資料，請到設定檔案設定預設圖片長寬數值');</script>";
-		}
-	}
+
 	if(is_null($_SESSION['username'])){
 		header("location:login.php");
 	}
-
+	if(is_file("init.php")){
+		include("init.php");
+	}else{
+		echo "<script type='text/javascript'>alert('找不到初始化設定檔案');</script>";
+		header("location:stop.php");
+	}
 	if($_SERVER['REQUEST_METHOD']=='POST'){
 		if($_POST['resize'] == 1){
 			$dir = "upload/";
@@ -71,8 +66,6 @@
 			}
 		}
 	}
-
-
 ?>
 <!DOCTYPE html>
 <html>
@@ -116,7 +109,7 @@
 						<li>檔案副檔名一律使用JPEG</li>
 						<li>本系統不會自動壓縮圖片大小，請自行變更</li>
 						<li>請注意檔案命名，請勿使用"."來取檔案名稱，以免發生錯誤(EX:web.ini.jpg)</li>
-						<li>使用縮圖功能，若長寬數值為空，將使用系統設定檔內的預設值進行縮圖動作(預設值長:<?php echo $config['default_height']; ?>像素&nbsp;寬:<?php echo $config['default_weight']; ?>像素)</li>
+						<li>使用縮圖功能，若長寬數值為空，將使用系統設定檔內的預設值進行縮圖動作(預設值為長:<?php echo $config['default_height']; ?>像素&nbsp;寬:<?php echo $config['default_weight']; ?>像素)</li>
 						<li>使用縮圖功能只需要輸入數值資料即可，不需輸入單位</li>
 					</ol>
 					如需修改程式碼，請點選一下按鈕觀看專案原始碼
