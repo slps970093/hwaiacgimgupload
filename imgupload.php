@@ -1,5 +1,12 @@
 <?php session_start(); ?>
 <?php
+	/*
+	 *
+	 * 網宣上傳系統 (Ver 2.0)
+	 * Code by Yu-Hsien,Chou
+	 * 新增 圖片自動調整大小功能(PHP需支援GD函式庫)
+	 *
+	 */
 	if(!is_file("config.php")){
 		echo "<script type='text/javascript'>alert('發生嚴重錯誤，請檢查設定檔案是否在網站根目錄下');</script>";
 	}else{
@@ -7,26 +14,65 @@
 		if(is_null($config['username']) && is_null($config['password'])){
 			echo "<script type='text/javascript'>alert('警告!帳號密碼尚未設定，請檢查設定檔案是否設定正確');</script>";
 		}
+		if(is_null($config['default_weight']) && is_null($config['default_height'])){
+			echo "<script type='text/javascript'>alert('注意:偵測到圖片預設長寬無資料，請到設定檔案設定預設圖片長寬數值');</script>";
+		}
 	}
 	if(is_null($_SESSION['username'])){
 		header("location:login.php");
 	}
+
 	if($_SERVER['REQUEST_METHOD']=='POST'){
-		$dir = "upload/";
-		unlink($dir."webimg.jpg"); //刪除檔案
-		//改檔案名
-		$file = explode(".", basename($_FILES['imgfile']['name']));
-		$Name = "webimg";
-		$file[0] = $Name.".".$file[1];
-		$target_Path = $dir.basename($file[0]);
-		//進行檔案上傳
-		$result = move_uploaded_file($_FILES['imgfile']['tmp_name'], $target_Path);
-		if($result){
-			header("location:imgupload.php?success");
+		if($_POST['resize'] == 1){
+			$dir = "upload/";
+			unlink($dir."webimg.jpg"); //刪除檔案
+			//改檔案名
+			$file = explode(".", basename($_FILES['imgfile']['name']));
+			$Name = "tmp";
+			$file[0] = $Name.".".$file[1];
+			$tmp_Path = $dir.basename($file[0]);
+			//進行檔案上傳
+			$result = move_uploaded_file($_FILES['imgfile']['tmp_name'], $tmp_Path);
+			//改檔案名
+			if($result){
+				$src = imagecreatefromjpeg($tmp_Path);
+				//取圖片長寬
+				$src_weight = imagesx($src);
+				$src_height = imagesy($src);
+				//套用自定義大小
+				$usr_weight = (!is_null($_POST['weight']))?intval($_POST['weight']):$config['default_weight'];
+				$usr_heiget = (!is_null($_POST['height']))?intval($_POST['height']):$config['default_height'];
+				$dst_image = imagecreatetruecolor($usr_weight, $usr_heiget);
+				imagecopyresized($dst_image, $src, 0, 0, 0, 0, $usr_weight, $usr_heiget, $src_weight, $src_height);
+				$result = imagejpeg($dst_image,$dir."webimg.jpg");
+				if($result){
+					unlink($tmp_Path);
+					header("location:imgupload.php?success");
+				}else{
+					unlink($tmp_Path);
+					header("location:imgupload.php?failed");
+				}
+			}
 		}else{
-			header("location:imgupload.php?failed");
+			echo "HELLO";
+			$dir = "upload/";
+			unlink($dir."webimg.jpg"); //刪除檔案
+			//改檔案名
+			$file = explode(".", basename($_FILES['imgfile']['name']));
+			$Name = "webimg";
+			$file[0] = $Name.".".$file[1];
+			$target_Path = $dir.basename($file[0]);
+			//進行檔案上傳
+			$result = move_uploaded_file($_FILES['imgfile']['tmp_name'], $target_Path);
+			if($result){
+				header("location:imgupload.php?success");
+			}else{
+				header("location:imgupload.php?failed");
+			}
 		}
 	}
+
+
 ?>
 <!DOCTYPE html>
 <html>
@@ -70,14 +116,55 @@
 						<li>檔案副檔名一律使用JPEG</li>
 						<li>本系統不會自動壓縮圖片大小，請自行變更</li>
 						<li>請注意檔案命名，請勿使用"."來取檔案名稱，以免發生錯誤(EX:web.ini.jpg)</li>
+						<li>使用縮圖功能，若長寬數值為空，將使用系統設定檔內的預設值進行縮圖動作(預設值長:<?php echo $config['default_height']; ?>像素&nbsp;寬:<?php echo $config['default_weight']; ?>像素)</li>
+						<li>使用縮圖功能只需要輸入數值資料即可，不需輸入單位</li>
 					</ol>
 					如需修改程式碼，請點選一下按鈕觀看專案原始碼
 					<p><a class="btn btn-primary btn-lg" href="https://github.com/slps970093/hwaiacgimgupload" role="button">查看專案原始碼</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="logout.php" role="button">登出</a>&nbsp;&nbsp;&nbsp;<a class="btn btn-primary btn-lg" href="<?php echo $config['blog']; ?>" role="button">連結部落格</a></p>
 				</div>
-				<form method="post" action="imgupload.php" enctype="multipart/form-data">
-					上傳圖片檔案<br>
+				<div class="alert alert-info" role="alert" style="display:none" id="Lockwarning">注意：你已經啟用縮圖功能，如需修改數值請點<button type="button" class="btn btn-danger" id="disabledLock">解除封鎖</button>如需還原請點<button type="button" class="btn btn-default" id="reset">還原預設設定</button></div>
+				<form method="POST" action="imgupload.php" enctype="multipart/form-data">
+					上傳圖片檔案:<br>
 					<input type="file" name="imgfile"><br>
+					是否調整圖片大小:<br>
+					<select name="resize" id="Resize" class="form-control">
+						<option value="1">是</option>
+						<option value="0" selected="selected">否</option>
+					</select>
+					<script type="text/javascript">
+						$("#Resize").change(function(){
+							if($("#Resize").val()==="1"){
+								alert("你已經啟用縮圖功能，如需修改數值請點選解除封鎖");
+								$("#ResizeMenu").fadeIn();
+								$("#Lockwarning").fadeIn();
+							}else{
+								$("#ResizeMenu").fadeOut();
+								$("#Lockwarning").fadeOut();
+								$('#weight').val("<?php echo $config['default_weight']; ?>");
+								$('#height').val("<?php echo $config['default_height']; ?>");
+								$('#weight').attr("readonly","readonly");
+								$('#height').attr("readonly","readonly");
+							}
+						});
+						$("#disabledLock").click(function(){
+							$('#weight').removeAttr("readonly")
+							$('#height').removeAttr("readonly")
+						});
+						$("#reset").click(function(){
+							$('#weight').val("<?php echo $config['default_weight']; ?>")
+							$('#height').val("<?php echo $config['default_height']; ?>")
+							$('#weight').attr("readonly","readonly")
+							$('#height').attr("readonly","readonly")
+						});
+					</script>
+					<div id="ResizeMenu" style="display:none">
+						<hr>
+						縮圖設定：<br>
+						寬度（單位像素）：<input type="text" class="form-control" value="<?php echo $config['default_weight']; ?>" name="weight" id="weight" readonly="readonly"><br>
+						高度（單位像素）：<input type="text" class="form-control" value="<?php echo $config['default_height']; ?>" name="height" id="height" readonly="readonly"><br>
+					</div>
 					<button class="btn btn-default">上傳檔案</button>
+
 				</form><br>
 				瀏覽目前圖片:<br>
 				<img src="upload/webimg.jpg" class="img-responsive"><br>
